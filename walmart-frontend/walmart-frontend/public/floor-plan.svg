@@ -1,0 +1,18 @@
+<svg width="1000" height="800" xmlns="http://www.w3.org/2000/svg" style="background-color:#f9f9f9;">
+  <title>Store Floor Plan</title>
+
+  <rect x="230" y="230" width="100" height="500" fill="#dcdcdc" rx="10" />
+  <rect x="400" y="230" width="100" height="500" fill="#dcdcdc" rx="10" />
+  <rect x="570" y="230" width="100" height="500" fill="#dcdcdc" rx="10" />
+  <rect x="740" y="230" width="100" height="500" fill="#dcdcdc" rx="10" />
+
+  <rect x="50" y="50" width="900" height="100" fill="#e8e8e8" rx="10" />
+  <rect x="50" y="200" width="100" height="550" fill="#e8e8e8" rx="10" />
+  <rect x="900" y="200" width="50" height="550" fill="#e8e8e8" rx="10" />
+  <rect x="50" y="700" width="900" height="50" fill="#e8e8e8" rx="10" />
+
+  <text x="100" y="600" font-family="Arial" font-size="20" fill="#333">Produce</text>
+  <text x="800" y="100" font-family="Arial" font-size="20" fill="#333">Dairy/Meat</text>
+  <text x="450" y="730" font-family="Arial" font-size="20" fill="#333">Checkouts</text>
+  <text x="80" y="80" font-family="Arial" font-size="20" font-weight="bold" fill="green">ENTRANCE</text>
+</svg>
