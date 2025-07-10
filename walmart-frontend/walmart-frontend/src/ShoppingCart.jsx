@@ -1,8 +1,6 @@
 // src/ShoppingCart.jsx
-
 import React from 'react';
 
-// Accept the new onGenerateRoute prop
 function ShoppingCart({ cart, onGenerateRoute }) {
   return (
     <div className="shopping-cart">
@@ -12,11 +10,8 @@ function ShoppingCart({ cart, onGenerateRoute }) {
       ) : (
         <>
           <ul>
-            {cart.map((item, index) => (
-              <li key={`${item.sku}-${index}`}>{item.name}</li>
-            ))}
+            {cart.map((item) => (<li key={item.sku}>{item.name}</li>))}
           </ul>
-          {/* Attach the function to the button's onClick */}
           <button onClick={onGenerateRoute}>Generate Route</button>
         </>
       )}

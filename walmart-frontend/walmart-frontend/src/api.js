@@ -1,97 +1,36 @@
-// src/api.js
-
 const API_BASE_URL = 'http://localhost:8080/api';
 
-export const fetchAllProducts = async () => {
+const apiFetch = async (url, options = {}) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/products`);
+    const response = await fetch(url, options);
     if (!response.ok) {
-      throw new Error('Network response was not ok');
+      const errorBody = await response.text();
+      console.error("API Error Response:", errorBody);
+      throw new Error(`Network response was not ok. Status: ${response.status}`);
     }
-    return await response.json();
+    if (response.status === 204 || response.headers.get("content-length") === "0") return;
+    const contentType = response.headers.get("content-type");
+    if (contentType && contentType.includes("application/json")) return response.json();
+    return response.text();
   } catch (error) {
-    console.error("Failed to fetch products:", error);
-    return []; // Return an empty array on error
-  }
-};
-export const fetchOptimizedRoute = async (productSkus) => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/products/optimize-route`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(productSkus), // Send the array of SKU strings
-    });
-
-    if (!response.ok) {
-      throw new Error('Network response was not ok');
-    }
-    return await response.json();
-  } catch (error) {
-    console.error("Failed to fetch optimized route:", error);
-    return [];
-  }
-};
-export const createProduct = async (productData) => {
-  const response = await fetch(`${API_BASE_URL}/products`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(productData),
-  });
-  return await response.json();
-};
-
-export const updateProduct = async (sku, productData) => {
-  const response = await fetch(`${API_BASE_URL}/products/${sku}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(productData),
-  });
-  return await response.json();
-};
-
-export const deleteProduct = async (sku) => {
-  await fetch(`${API_BASE_URL}/products/${sku}`, {
-    method: 'DELETE',
-  });
-};
-
-export const updateProductLocation = async (sku, location) => {
-  const response = await fetch(`${API_BASE_URL}/products/${sku}/location`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(location),
-  });
-  return await response.json();
-};
-
-export const getActiveFloorPlan = async () => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/floorplan/active`);
-    if (!response.ok) throw new Error('Failed to get active floor plan');
-    return await response.json();
-  } catch (error) {
-    console.error(error);
-    return { activeFloorPlanUrl: '/floor-plan.svg' }; // Default fallback
+    console.error(`Failed to fetch from ${url}:`, error);
+    throw error;
   }
 };
 
-export const uploadFloorPlan = async (file) => {
-  const formData = new FormData();
-  formData.append('file', file);
+export const fetchAllProducts = () => apiFetch(`${API_BASE_URL}/products`);
+export const createProduct = (productData) => apiFetch(`${API_BASE_URL}/products`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(productData) });
+export const updateProduct = (sku, productData) => apiFetch(`${API_BASE_URL}/products/${sku}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(productData) });
+export const deleteProduct = (sku) => apiFetch(`${API_BASE_URL}/products/${sku}`, { method: 'DELETE' });
 
-  try {
-    const response = await fetch(`${API_BASE_URL}/floorplan/upload`, {
-      method: 'POST',
-      body: formData, // NOTE: No 'Content-Type' header needed for FormData
-    });
-    if (!response.ok) throw new Error('File upload failed');
-    return await response.text();
-  } catch (error) {
-    console.error(error);
-    return null;
-  }
-};
+export const fetchAllWaypoints = () => apiFetch(`${API_BASE_URL}/waypoints`);
+export const createWaypoint = (locationData) => apiFetch(`${API_BASE_URL}/waypoints`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: locationData }) });
+export const connectWaypoints = (fromId, toId) => apiFetch(`${API_BASE_URL}/waypoints/${fromId}/connect`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ connectToId: toId }) });
+export const updateWaypointLocation = (id, location) => apiFetch(`${API_BASE_URL}/waypoints/${id}/location`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(location) });
+export const deleteWaypoint = (id) => apiFetch(`${API_BASE_URL}/waypoints/${id}`, { method: 'DELETE' });
 
-// We will add the function to get the optimized route here later
+export const assignProductToWaypoint = (sku, waypointId) => apiFetch(`${API_BASE_URL}/products/${sku}/assign-waypoint`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ waypointId }) });
+export const getSettings = () => apiFetch(`${API_BASE_URL}/settings`);
+export const updateSettingLocation = (type, location) => apiFetch(`${API_BASE_URL}/settings/location/${type}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(location) });
+export const fetchOptimizedRoute = (productSkus) => apiFetch(`${API_BASE_URL}/products/optimize-route`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(productSkus) });
+export const uploadFloorPlan = async () => Promise.resolve("Upload functionality is a placeholder.");

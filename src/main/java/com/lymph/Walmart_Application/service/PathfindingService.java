@@ -1,171 +1,112 @@
-// src/main/java/com/lymph/Walmart_Application/service/PathfindingService.java
-
 package com.lymph.Walmart_Application.service;
 
-import com.lymph.Walmart_Application.entity.Product;
+import com.lymph.Walmart_Application.entity.Location;
+import com.lymph.Walmart_Application.entity.Waypoint;
+import com.lymph.Walmart_Application.repo.WaypointRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 
+/**
+ * Implements the A* pathfinding algorithm to find the shortest path between two waypoints.
+ */
 @Service
 public class PathfindingService {
 
-    // A private inner class to represent a node in our grid for the A* algorithm
-    private static class Node implements Comparable<Node> {
-        int x, y;
-        double gScore; // Cost from start to this node
-        double fScore; // gScore + heuristic cost to end
-        Node parent;
+    @Autowired
+    private WaypointRepository waypointRepository;
 
-        Node(int x, int y) {
-            this.x = x;
-            this.y = y;
-            this.gScore = Double.MAX_VALUE;
-            this.fScore = Double.MAX_VALUE;
-            this.parent = null;
+    private static class PathNode implements Comparable<PathNode> {
+        String waypointId;
+        double gScore; // Cost from start to the current node
+        double fScore; // Estimated cost from start to end (gScore + heuristic)
+        PathNode parent;
+
+        PathNode(String waypointId) {
+            this.waypointId = waypointId;
+            this.gScore = Double.POSITIVE_INFINITY;
+            this.fScore = Double.POSITIVE_INFINITY;
         }
 
         @Override
-        public int compareTo(Node other) {
+        public int compareTo(PathNode other) {
             return Double.compare(this.fScore, other.fScore);
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) return true;
-            if (obj == null || getClass() != obj.getClass()) return false;
-            Node node = (Node) obj;
-            return x == node.x && y == node.y;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(x, y);
         }
     }
 
+    public List<Waypoint> findPath(String startId, String endId) {
+        Map<String, Waypoint> allWaypoints = new HashMap<>();
+        waypointRepository.findAll().forEach(wp -> allWaypoints.put(wp.getId(), wp));
 
-    private static final int GRID_SCALE = 20; // Each cell is 20x20 pixels
-    private static final int GRID_WIDTH = 60;   // 1200px / 20 = 60
-    private static final int GRID_HEIGHT = 40;  // 800px / 20 = 40
+        if (!allWaypoints.containsKey(startId) || !allWaypoints.containsKey(endId)) {
+            return new ArrayList<>(); // Return empty list if start or end doesn't exist
+        }
 
-    // The new grid based on your walmartFloorplan.jpg
-    private static final int[][] MAP_GRID = {
-            // 60 columns, 40 rows
-            {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,0,1,1,1,1,0,0,0,0,1,1,1,0,0,0,1,1,1,1,0,0,1,1,1,1,1,1,0,1,1,1,1,0,0,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1},
-            {1,0,1,1,1,1,0,0,0,0,1,1,1,0,0,0,1,1,1,1,0,0,1,1,1,1,1,1,0,1,1,1,1,0,0,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1},
-            {1,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,0,1,1,1,1,0,0,0,0,1,1,1,0,0,0,1,1,1,1,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,1},
-            {1,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,1,1,1,1,0,0,1,1,1,1,1,1,0,1,1,1,1,0,0,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,0,0,0,0,1,1,0,1},
-            {1,0,1,1,1,1,1,1,0,0,1,1,1,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,1},
-            {1,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,0,0,1,1,1,1,1,1,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,0,0,0,0,1,1,0,1},
-            {1,0,1,1,1,1,1,1,0,0,1,1,1,1,1,0,1,1,1,1,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,0,0,0,0,1,1,0,1},
-            {1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,1},
-            {1,0,1,1,1,1,1,1,0,0,1,1,1,1,1,0,1,1,1,1,0,0,1,1,1,1,1,1,0,1,1,1,1,0,0,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,0,0,0,0,1,1,0,1},
-            {1,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,0,0,0,0,1,1,0,1},
-            {1,0,1,1,1,1,1,1,0,0,1,1,1,1,1,0,1,1,1,1,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,1},
-            {1,0,1,1,1,1,1,1,0,0,1,1,1,1,1,0,1,1,1,1,0,0,1,1,1,1,1,1,0,1,1,1,1,0,0,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1},
-            {1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
-            {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0,1,1,1,1,1,1,1},
-            {1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0,1,1,1,1,1,1,1},
-            {1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0,1,1,1,1,1,1,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0,1,1,1,1,1,1,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
-    };
+        Map<String, PathNode> allPathNodes = new HashMap<>();
+        allWaypoints.keySet().forEach(id -> allPathNodes.put(id, new PathNode(id)));
 
-
-    public List<Product.Location> findPath(Product.Location startLoc, Product.Location endLoc) {
-        Node startNode = new Node((int)startLoc.getX() / GRID_SCALE, (int)startLoc.getY() / GRID_SCALE);
-        Node endNode = new Node((int)endLoc.getX() / GRID_SCALE, (int)endLoc.getY() / GRID_SCALE);
-
-        PriorityQueue<Node> openSet = new PriorityQueue<>();
-        Set<Node> closedSet = new HashSet<>();
-        Map<Node, Double> gScores = new HashMap<>();
-
+        PathNode startNode = allPathNodes.get(startId);
         startNode.gScore = 0;
-        startNode.fScore = heuristic(startNode, endNode);
+        startNode.fScore = heuristic(allWaypoints.get(startId), allWaypoints.get(endId));
+
+        PriorityQueue<PathNode> openSet = new PriorityQueue<>();
         openSet.add(startNode);
-        gScores.put(startNode, 0.0);
+
+        Set<String> closedSet = new HashSet<>();
 
         while (!openSet.isEmpty()) {
-            Node current = openSet.poll();
+            PathNode current = openSet.poll();
 
-            if (current.equals(endNode)) {
-                return reconstructPath(current);
+            if (current.waypointId.equals(endId)) {
+                return reconstructPath(current, allPathNodes, allWaypoints);
             }
 
-            closedSet.add(current);
+            closedSet.add(current.waypointId);
 
-            for (Node neighbor : getNeighbors(current)) {
-                if (closedSet.contains(neighbor)) {
-                    continue;
-                }
+            Waypoint currentWaypoint = allWaypoints.get(current.waypointId);
+            if (currentWaypoint.getConnections() == null) continue; // Skip if no connections
 
-                double tentativeGScore = current.gScore + 1; // Assuming distance between neighbors is 1
+            for (String neighborId : currentWaypoint.getConnections()) {
+                if (closedSet.contains(neighborId) || !allWaypoints.containsKey(neighborId)) continue;
 
-                if (tentativeGScore < gScores.getOrDefault(neighbor, Double.MAX_VALUE)) {
-                    neighbor.parent = current;
-                    neighbor.gScore = tentativeGScore;
-                    neighbor.fScore = tentativeGScore + heuristic(neighbor, endNode);
-                    gScores.put(neighbor, tentativeGScore);
+                PathNode neighborNode = allPathNodes.get(neighborId);
+                double tentativeGScore = current.gScore + distanceBetween(currentWaypoint, allWaypoints.get(neighborId));
 
-                    if (!openSet.contains(neighbor)) {
-                        openSet.add(neighbor);
+                if (tentativeGScore < neighborNode.gScore) {
+                    neighborNode.parent = current;
+                    neighborNode.gScore = tentativeGScore;
+                    neighborNode.fScore = neighborNode.gScore + heuristic(allWaypoints.get(neighborId), allWaypoints.get(endId));
+
+                    if (!openSet.contains(neighborNode)) {
+                        openSet.add(neighborNode);
+                    } else {
+                        // Refresh priority if path is better
+                        openSet.remove(neighborNode);
+                        openSet.add(neighborNode);
                     }
                 }
             }
         }
-
-        return new ArrayList<>(); // Return empty path if no path is found
+        return new ArrayList<>(); // No path found
     }
 
-    private double heuristic(Node a, Node b) {
-        // Euclidean distance heuristic
-        return Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2));
+    // Heuristic is the straight-line distance (Euclidean distance).
+    private double heuristic(Waypoint a, Waypoint b) {
+        return distanceBetween(a, b);
     }
 
-    private List<Node> getNeighbors(Node node) {
-        List<Node> neighbors = new ArrayList<>();
-        int[] dx = {0, 0, 1, -1}; // Right, Left, Down, Up
-        int[] dy = {1, -1, 0, 0};
-
-        for (int i = 0; i < 4; i++) {
-            int newX = node.x + dx[i];
-            int newY = node.y + dy[i];
-
-            if (newX >= 0 && newX < GRID_WIDTH && newY >= 0 && newY < GRID_HEIGHT && MAP_GRID[newY][newX] == 0) {
-                neighbors.add(new Node(newX, newY));
-            }
-        }
-        return neighbors;
+    // Calculates 2D Euclidean distance. Ignores Z-axis for pathfinding simplicity.
+    private double distanceBetween(Waypoint a, Waypoint b) {
+        Location locA = a.getLocation();
+        Location locB = b.getLocation();
+        return Math.sqrt(Math.pow(locA.getX() - locB.getX(), 2) + Math.pow(locA.getY() - locB.getY(), 2));
     }
 
-    private List<Product.Location> reconstructPath(Node current) {
-        List<Product.Location> totalPath = new ArrayList<>();
+    private List<Waypoint> reconstructPath(PathNode current, Map<String, PathNode> allPathNodes, Map<String, Waypoint> allWaypoints) {
+        List<Waypoint> totalPath = new ArrayList<>();
         while (current != null) {
-            // Scale grid coordinates back to map coordinates
-            totalPath.add(new Product.Location(current.x * GRID_SCALE, current.y * GRID_SCALE));
+            totalPath.add(allWaypoints.get(current.waypointId));
             current = current.parent;
         }
         Collections.reverse(totalPath);

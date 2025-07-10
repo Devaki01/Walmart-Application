@@ -59,6 +59,7 @@
   height: 100%;
   display: block;
   cursor: crosshair;
+  object-fit: fill;
 }
 
 .location-dot {
@@ -136,4 +137,56 @@
 .product-form input {
   padding: 0.5rem;
   font-size: 1rem;
+}
+/* src/AdminPage.css */
+/* ... all your existing CSS ... */
+
+.location-dot.entrance {
+  background-color: #28a745; /* Green */
+  color: white;
+  width: 20px;
+  height: 20px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.location-dot.checkout {
+  background-color: #dc3545; /* Red */
+  color: white;
+  width: 20px;
+  height: 20px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+/* src/AdminPage.css */
+/* ... keep all existing styles ... */
+
+.waypoint-dot {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background-color: rgba(0, 123, 255, 0.5); /* Semi-transparent blue */
+  border: 1px solid white;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.waypoint-dot:hover {
+  background-color: rgba(0, 123, 255, 1); /* Solid blue on hover */
+  transform: translate(-50%, -50%) scale(1.5);
+}
+
+.location-dot.selected {
+  background-color: #28a745; /* Green for placed/selected */
+  border-color: white;
+  transform: translate(-50%, -50%) scale(1.8);
+  z-index: 10;
 }

@@ -1,24 +1,8 @@
-// src/MapView.jsx
-
-import React, { useState, useEffect } from 'react';
-import { getActiveFloorPlan } from './api'; // Import the new API function
+import React from 'react';
 
 function MapView({ route, onBack }) {
-  const [floorPlanUrl, setFloorPlanUrl] = useState('');
-
-  // This effect runs when the component mounts to fetch the current map's URL
-  useEffect(() => {
-    const fetchMap = async () => {
-      const settings = await getActiveFloorPlan();
-      setFloorPlanUrl(settings.activeFloorPlanUrl);
-    };
-    fetchMap();
-  }, []);
-
   const generatePath = (routeData) => {
-    if (!routeData || routeData.length === 0) {
-      return "";
-    }
+    if (!routeData || routeData.length === 0) return "";
     const firstPoint = routeData[0];
     let pathString = `M ${firstPoint.x} ${firstPoint.y}`;
     for (let i = 1; i < routeData.length; i++) {
@@ -34,23 +18,20 @@ function MapView({ route, onBack }) {
     <div className="map-view">
       <h2>Your Optimized Route</h2>
       <p>Follow the red line to gather your items efficiently!</p>
-      
       <div className="map-container">
-        {/* Only render the image if the URL has been fetched */}
-        {floorPlanUrl && <img src={floorPlanUrl} alt="Store Floor Plan" />}
-        
-        <svg className="path-overlay" width="1200" height="800" xmlns="http://www.w3.org/2000/svg">
-          <path
-            d={pathData}
-            fill="none"
-            stroke="red"
-            strokeWidth="5"
-            strokeLinejoin="round"
-            strokeLinecap="round"
-          />
+        <img src="/walmart-map.svg" alt="Store Floor Plan" />
+        <svg className="path-overlay" width="1200" height="800" viewBox="0 0 1200 800">
+          {route.length > 0 && (
+            <>
+              <path d={pathData} fill="none" stroke="red" strokeWidth="5" strokeLinejoin="round" strokeLinecap="round" />
+              {/* Start Circle */}
+              <circle cx={route[0].x} cy={route[0].y} r="10" fill="green" />
+              {/* End Circle */}
+              <circle cx={route[route.length - 1].x} cy={route[route.length - 1].y} r="10" fill="blue" />
+            </>
+          )}
         </svg>
       </div>
-
       <button onClick={onBack} style={{ marginTop: '1rem' }}>Start New List</button>
     </div>
   );

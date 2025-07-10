@@ -1,5 +1,4 @@
 // src/ProductList.jsx
-
 import React from 'react';
 
 function ProductList({ products, addToCart }) {
@@ -9,7 +8,10 @@ function ProductList({ products, addToCart }) {
       <ul>
         {products.map(product => (
           <li key={product.sku}>
-            {product.name} ({product.category})
+            <div>
+              <span className="product-name">{product.name}</span>
+              <span className="product-category">{product.category}</span>
+            </div>
             <button onClick={() => addToCart(product)}>Add to Cart</button>
           </li>
         ))}
