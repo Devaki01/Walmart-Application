@@ -18,4 +18,5 @@ public class Waypoint {
     private Location location;
     // Initialize the list to prevent NullPointerExceptions when adding connections.
     private List<String> connections = new ArrayList<>();
+
 }

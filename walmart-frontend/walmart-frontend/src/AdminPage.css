@@ -1,180 +1,68 @@
 /* src/AdminPage.css */
 
-.admin-container {
-  display: flex;
-  gap: 1rem;
+/* Fullscreen container for the admin page */
+.admin-page.fullscreen {
+  position: relative; /* Needed for absolute positioning of children like sidebar-toggle */
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden; /* Hide overflow when sidebar is closed/transitioning */
+  display: flex; /* Use flexbox to organize map and potentially other elements */
 }
 
-.product-placement-list {
-  flex: 1;
-  border: 1px solid #ccc;
-  padding: 1rem;
-  max-height: 800px;
-  overflow-y: auto;
+/* Map container to fill available space */
+.fullscreen-map {
+  flex-grow: 1; /* Allow map to take up all available space */
+  position: relative;
+  overflow: hidden; /* Hide anything spilling out of map area */
+  background-color: #f0f0f0; /* Optional: background for map area */
+  display: flex; /* Enable flex for map header, image, and overlays */
+  flex-direction: column; /* Stack header and image vertically */
 }
 
-.product-placement-list ul {
-  list-style: none;
-  padding: 0;
-}
-
-.product-placement-list li {
-  padding: 0.8rem;
-  border-bottom: 1px solid #eee;
-  cursor: pointer;
+.map-header {
+  padding: 10px;
+  background-color: rgba(255, 255, 255, 0.8);
+  border-bottom: 1px solid #ddd;
   display: flex;
   justify-content: space-between;
-  align-items: center;
-}
-
-.product-placement-list li:hover {
-  background-color: #f0f0f0;
-}
-
-.product-placement-list li.selected {
-  background-color: #d4edda;
-  font-weight: bold;
-}
-
-.location-indicator {
-  color: green;
   font-size: 0.8em;
+  z-index: 2; /* Ensure header is above map image */
 }
 
-.location-indicator-missing {
-  color: red;
-  font-size: 0.8em;
-}
-
-.map-container-admin {
-  flex: 3;
-  position: relative;
-  border: 1px solid black;
-  width: 1000px;
-  height: 800px;
-}
-
-.map-container-admin img {
+.map-image {
   width: 100%;
   height: 100%;
+  object-fit: contain; /* This ensures the image scales while maintaining its aspect ratio */
   display: block;
   cursor: crosshair;
-  object-fit: fill;
 }
 
-.location-dot {
+.path-overlay {
   position: absolute;
-  width: 10px;
-  height: 10px;
-  background-color: #007bff;
-  border-radius: 50%;
-  transform: translate(-50%, -50%); /* Center the dot on the coordinates */
-  pointer-events: none; /* Make sure the dot doesn't block map clicks */
-  border: 2px solid white;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none; /* Allows clicks to pass through to the map below */
+  z-index: 1; /* Below waypoints, above map image */
 }
 
-.location-dot.selected {
-  background-color: #ff0000;
-  transform: translate(-50%, -50%) scale(1.5); /* Make selected dot bigger */
-  z-index: 10;
+
+/* Waypoint and Setting Dots - Now using percentage for positioning */
+.waypoint-dot, .setting-dot {
+  position: absolute;
+  /* transform: translate(-50%, -50%); - This centers the dot precisely on the given x,y coordinate. Keep it. */
+  transform: translate(-50%, -50%);
+  pointer-events: auto; /* Allow clicks on dots */
+  z-index: 3; /* Above map image and paths */
 }
-
-/* src/AdminPage.css */
-
-/* ... keep all your existing CSS ... */
-
-/* ADD THESE NEW STYLES */
-
-.admin-tabs {
-  margin-bottom: 1rem;
-}
-
-.admin-tabs button {
-  padding: 0.5rem 1rem;
-  cursor: pointer;
-  border: 1px solid #ccc;
-  background-color: #f0f0f0;
-}
-
-.admin-tabs button.active {
-  background-color: #007bff;
-  color: white;
-  border-color: #007bff;
-}
-
-.product-management-list {
-  flex: 2; /* Give more space to the list */
-  border: 1px solid #ccc;
-  padding: 1rem;
-  max-height: 700px;
-  overflow-y: auto;
-}
-
-.product-management-list li {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.5rem;
-  border-bottom: 1px solid #eee;
-}
-
-.product-management-list button {
-  margin-left: 0.5rem;
-}
-
-.product-form {
-  flex: 1; /* Give less space to the form */
-  padding: 1rem;
-  border: 1px solid #ccc;
-}
-
-.product-form form {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.product-form input {
-  padding: 0.5rem;
-  font-size: 1rem;
-}
-/* src/AdminPage.css */
-/* ... all your existing CSS ... */
-
-.location-dot.entrance {
-  background-color: #28a745; /* Green */
-  color: white;
-  width: 20px;
-  height: 20px;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-}
-
-.location-dot.checkout {
-  background-color: #dc3545; /* Red */
-  color: white;
-  width: 20px;
-  height: 20px;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-}
-/* src/AdminPage.css */
-/* ... keep all existing styles ... */
 
 .waypoint-dot {
-  position: absolute;
   width: 12px;
   height: 12px;
   background-color: rgba(0, 123, 255, 0.5); /* Semi-transparent blue */
   border: 1px solid white;
   border-radius: 50%;
-  transform: translate(-50%, -50%);
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -184,9 +72,320 @@
   transform: translate(-50%, -50%) scale(1.5);
 }
 
-.location-dot.selected {
-  background-color: #28a745; /* Green for placed/selected */
-  border-color: white;
-  transform: translate(-50%, -50%) scale(1.8);
-  z-index: 10;
+.waypoint-dot.connecting {
+  background-color: #ffc107; /* Yellow for connecting */
+  border-color: #fff;
+  transform: translate(-50%, -50%) scale(1.2);
 }
+
+.waypoint-dot.moving {
+  background-color: #17a2b8; /* Cyan for moving */
+  border-color: #fff;
+  transform: translate(-50%, -50%) scale(1.2);
+}
+
+.setting-dot {
+  width: 24px; /* Larger for settings */
+  height: 24px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  border-radius: 50%;
+  border: 2px solid white;
+  color: white;
+  cursor: pointer;
+}
+
+.setting-dot.entrance {
+  background-color: #28a745; /* Green */
+}
+
+.setting-dot.checkout {
+  background-color: #dc3545; /* Red */
+}
+
+/* Sidebar Toggle Button */
+.sidebar-toggle {
+  position: fixed; /* Fixed position so it's always visible */
+  top: 25px; /* Moved slightly downwards */
+  right: 15px; /* Stays on the right */
+  left: auto; /* Ensure no conflict with left positioning */
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  padding: 8px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 100; /* Ensure it's above everything */
+  transition: all 0.3s ease;
+}
+
+.sidebar-toggle:hover {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.sidebar-toggle .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #333;
+}
+
+/* Sidebar Styles - Now overlapping from the right */
+.sidebar {
+  position: fixed; /* Make it fixed to overlap the map */
+  top: 0;
+  right: -350px; /* Start off-screen to the right */
+  left: auto; /* Remove left positioning */
+  width: 300px; /* Adjust width as needed */
+  height: 100%;
+  background-color: #fff;
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2); /* Shadow now on the left side */
+  padding: 20px;
+  overflow-y: auto;
+  transition: right 0.3s ease-in-out; /* Smooth transition for sliding from right */
+  z-index: 99; /* Below the toggle button, but above the map */
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar.open {
+  right: 0; /* Slide in when open */
+}
+
+.sidebar h1 {
+  margin-top: 0;
+  color: #333;
+  font-size: 1.5em;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+}
+
+.sidebar nav.admin-tabs {
+  display: flex;
+  margin-bottom: 15px;
+  border-bottom: none; /* Remove bottom border from here if moved into sidebar */
+}
+
+.sidebar nav.admin-tabs button {
+  flex-grow: 1;
+  padding: 10px 15px;
+  border: 1px solid #ddd;
+  border-bottom: none;
+  background-color: #f9f9f9;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 0.9em;
+  color: #555;
+  transition: all 0.2s ease;
+}
+
+.sidebar nav.admin-tabs button:first-child {
+  border-top-left-radius: 5px;
+}
+
+.sidebar nav.admin-tabs button:last-child {
+  border-top-right-radius: 5px;
+}
+
+.sidebar nav.admin-tabs button.active {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.sidebar nav.admin-tabs button:not(.active):hover {
+  background-color: #e9e9e9;
+}
+
+
+.current-mode-status {
+  background-color: #e9f7ef;
+  border: 1px solid #d0e7db;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  color: #3c763d;
+  font-size: 0.9em;
+}
+
+.sidebar-content {
+  flex-grow: 1; /* Allow content to fill remaining space */
+  overflow-y: auto; /* Scroll content if it overflows */
+  padding-right: 5px; /* For scrollbar spacing */
+}
+
+/* Product List in sidebar */
+.sidebar-content ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar-content li {
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9em;
+}
+
+.sidebar-content li:hover {
+  background-color: #f5f5f5;
+}
+
+.sidebar-content li.selected {
+  background-color: #d4edda;
+  font-weight: bold;
+  color: #155724;
+}
+
+.location-indicator {
+  color: green;
+  font-size: 1.2em; /* Make it a bit larger */
+}
+
+.location-indicator-missing {
+  color: red;
+  font-size: 1.2em; /* Make it a bit larger */
+}
+
+
+/* Product Management Section (ProductForm and Table) */
+.product-form {
+  padding: 1rem 0; /* Adjust padding as it's now inside the sidebar */
+  border: none; /* Remove border as sidebar has one */
+  margin-bottom: 20px;
+}
+
+.product-form form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.product-form label {
+  font-weight: bold;
+  font-size: 0.85em;
+  margin-bottom: 2px;
+  display: block;
+}
+
+.product-form input,
+.product-form select {
+  padding: 8px;
+  font-size: 0.9em;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: 100%;
+  box-sizing: border-box; /* Include padding and border in element's total width and height */
+}
+
+.product-form button {
+  padding: 10px 15px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: background-color 0.2s ease;
+}
+
+.product-form button:hover {
+  background-color: #0056b3;
+}
+
+.product-form button.cancel {
+  background-color: #6c757d;
+  margin-left: 10px;
+}
+
+.product-form button.cancel:hover {
+  background-color: #5a6268;
+}
+
+/* Product Table */
+.sidebar-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  font-size: 0.85em;
+}
+
+.sidebar-content th,
+.sidebar-content td {
+  border: 1px solid #eee;
+  padding: 8px;
+  text-align: left;
+}
+
+.sidebar-content th {
+  background-color: #f8f8f8;
+  font-weight: bold;
+}
+
+.sidebar-content td button {
+  padding: 5px 10px;
+  font-size: 0.8em;
+  margin-right: 5px;
+  background-color: #ffc107;
+  color: #333;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.sidebar-content td button:hover {
+  background-color: #e0a800;
+}
+
+.sidebar-content td button:last-child {
+  background-color: #dc3545;
+  color: white;
+}
+
+.sidebar-content td button:last-child:hover {
+  background-color: #c82333;
+}
+
+/* Store Settings Buttons */
+.sidebar-content hr {
+  margin: 20px 0;
+  border: 0;
+  border-top: 1px solid #eee;
+}
+
+.sidebar-content button {
+  display: block; /* Make buttons stack vertically */
+  width: 100%; /* Full width */
+  padding: 10px;
+  margin-bottom: 10px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: background-color 0.2s ease;
+}
+
+.sidebar-content button:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+
+.sidebar-content button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+/* Floor Plan Uploader specific styles (if any) */
+/* Assuming FloorPlanUploader has its own internal styling */
