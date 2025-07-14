@@ -84,8 +84,12 @@ function AdminPage() {
   };
 
   return (
-    <div style={{ padding: '1rem' }}>
-      <h1>Admin Dashboard</h1>
+    <div className='adminPage'>
+      <div className='flex-container'> 
+        <div className='logo'> <h1> Walmart Pro </h1> </div>
+        <div className='admin_dashboard'> <h1> Admin Dashboard </h1> </div>
+      </div>
+
       <div className="admin-tabs">
         <button onClick={() => setActiveTab('placement')} className={activeTab === 'placement' ? 'active' : ''}>Item Placement</button>
         <button onClick={() => setActiveTab('management')} className={activeTab === 'management' ? 'active' : ''}>Product Management</button>

@@ -26,11 +26,15 @@ li {
 
 button {
   cursor: pointer;
-  padding: 0.3rem 0.7rem;
+  padding: 1px 2px;
   border: 1px solid #007bff;
   background-color: #007bff;
   color: white;
   border-radius: 4px;
+}
+
+button:hover {
+  background-color: #cae1fa;
 }
 
 /* src/App.css */

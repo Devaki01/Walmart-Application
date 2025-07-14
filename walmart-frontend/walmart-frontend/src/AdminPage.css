@@ -1,8 +1,20 @@
 /* src/AdminPage.css */
 
+.adminPage {
+  background-color: azure;
+  font-family: Georgia, 'Times New Roman', Times, serif;
+  padding: 2rem;
+}
+
 .admin-container {
   display: flex;
-  gap: 1rem;
+  gap: 2rem;
+}
+
+.flex-container {
+  display: flex;
+  flex-direction: row;
+  gap: 5rem;
 }
 
 .product-placement-list {
@@ -95,11 +107,22 @@
   background-color: #f0f0f0;
 }
 
-.admin-tabs button.active {
+.admin-tabs button {
   background-color: #007bff;
   color: white;
   border-color: #007bff;
+  padding: 10px 30px;
+  margin: 5px;
 }
+
+.admin-tabs button.active{
+  background-color: white;
+  color: #007bff; 
+  border-color: #007bff;
+  padding: 10px 30px;
+  margin: 5px;
+}
+
 
 .product-management-list {
   flex: 2; /* Give more space to the list */
@@ -118,7 +141,7 @@
 }
 
 .product-management-list button {
-  margin-left: 0.5rem;
+  margin-left: 2rem;
 }
 
 .product-form {

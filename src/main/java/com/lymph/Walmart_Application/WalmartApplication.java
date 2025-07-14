@@ -10,5 +10,4 @@ public class WalmartApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(WalmartApplication.class, args);
 	}
-
 }
